@@ -174,7 +174,10 @@ USER $USERNAME
 ENV SIMBOTIC_PROJECT $HOME/Project/
 ENV SIMBOTIC_ROOT $HOME/SimboticEngine/
 
-COPY --chown=$USERNAME:$USERNAME ./Drone_QRCode $SIMBOTIC_PROJECT
+ARG PROJECT_NAME=Drone_QRCode
+# TODO: clone project instead of copying
+COPY --chown=$USERNAME:$USERNAME $PROJECT_NAME $SIMBOTIC_PROJECT
+
 COPY --chown=$USERNAME:$USERNAME ./cook.sh $SIMBOTIC_PROJECT
 
 ######## STAGE: gst-plugin-stage
@@ -195,9 +198,10 @@ RUN cargo build
 FROM gst-plugin-stage as cook-stage
 
 WORKDIR $SIMBOTIC_PROJECT
+RUN ./generate.sh && ./build.sh
 RUN ./cook.sh 1.0 Drone_QRCode
 
 ######## STAGE: production-stage
 FROM base as production-stage
 
-COPY --from=cook-stage SIMBOTIC_PROJECT/out/ ./out/
+COPY --from=cook-stage $SIMBOTIC_PROJECT/out/ ./out/

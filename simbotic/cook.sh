@@ -53,7 +53,7 @@ echo "======="
 "$UE4_PATH"/Engine/Build/BatchFiles/RunUAT.sh -ScriptsForProject="$PROJECT_ROOT"/"$PROJECT_NAME".uproject BuildCookRun -project="$PROJECT_ROOT"/"$PROJECT_NAME".uproject \
 -noP4 -clientconfig=Development -serverconfig=Development -nocompileeditor -ue4exe=UE4Editor -utf8output -platform=Linux -targetplatform=Linux \
 -build -cook -map=$MAPS_TO_COOK -unversionedcookedcontent -pak -createreleaseversion=$RELEASE_VERSION -compressed -stage -package \
--stagingdirectory="$PROJECT_ROOT"/out -cmdline= -Messaging
+-stagingdirectory="$PROJECT_ROOT"/out -cmdline= -Messaging -opengl4
 
 echo "======="
 echo "Modifying ${PROJECT_NAME}.sh to open with a window resolution of $WINDOW_RESOLUTION"
