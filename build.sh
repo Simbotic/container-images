@@ -5,8 +5,8 @@ RUN_PROD=$1
 if [ "$RUN_PROD" = "p" ]
 then
     echo "===> production"
-    docker build -t simbotic-sim ./production
+    docker build --target production-stage -t simbotic-sim ./simbotic
 else
-    echo "===> base"
-    docker build -t simbotic ./base
+    echo "===> development"
+    docker build --target cook-stage -t simbotic ./simbotic
 fi

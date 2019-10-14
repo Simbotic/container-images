@@ -180,8 +180,6 @@ COPY --chown=$USERNAME:$USERNAME ./cook.sh $SIMBOTIC_PROJECT
 ######## STAGE: gst-plugin-stage
 FROM simbotic-engine-stage as gst-plugin-stage
 
-ARG USERNAME=sim
-
 WORKDIR $HOME
 
 RUN eval $(ssh-agent) && \
@@ -193,5 +191,13 @@ ENV SIMBOTIC_GST_ELEMENTS $HOME/Gst-elements/
 WORKDIR $SIMBOTIC_GST_ELEMENTS
 RUN cargo build
 
+######## STAGE: cook-stage
+FROM gst-plugin-stage as cook-stage
+
 WORKDIR $SIMBOTIC_PROJECT
 RUN ./cook.sh 1.0 Drone_QRCode
+
+######## STAGE: production-stage
+FROM base as production-stage
+
+COPY --from=cook-stage SIMBOTIC_PROJECT/out/ ./out/
