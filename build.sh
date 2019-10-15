@@ -9,4 +9,5 @@ then
 else
     echo "===> development"
     docker build --target cook-stage -t simbotic ./simbotic
+    # docker build --target simbotic-engine-stage -t simbotic ./simbotic
 fi

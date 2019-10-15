@@ -157,7 +157,7 @@ WORKDIR $HOME
 
 RUN eval $(ssh-agent) && \
     ssh-add $HOME/simbotic_key && \
-    git clone git@github.com:Simbotic/SimboticEngine.git --depth 1 -b Simbotic/4.22
+    git clone git@github.com:Simbotic/SimboticEngine.git --depth 1 -b 4.23.0-release
 
 RUN mkdir -p $HOME/SimboticEngine/Engine/Plugins/Simbotic
 WORKDIR $HOME/SimboticEngine/Engine/Plugins/Simbotic
@@ -165,6 +165,8 @@ RUN eval $(ssh-agent) && \
     ssh-add $HOME/simbotic_key && \
     git clone git@github.com:Simbotic/ue4-gst-plugin.git --depth 1 GStreamer
 WORKDIR $HOME/SimboticEngine
+RUN sed -i 's/bUseUnityBuild = true/bUseUnityBuild = false/' Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs
+RUN sed -i 's/bUsePCHFiles = true/bUsePCHFiles = false/' Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs
 RUN ./Setup.sh
 RUN ./GenerateProjectFiles.sh
 RUN make
@@ -204,4 +206,8 @@ RUN ./cook.sh 1.0 Drone_QRCode
 ######## STAGE: production-stage
 FROM base as production-stage
 
-COPY --from=cook-stage $SIMBOTIC_PROJECT/out/ ./out/
+USER sim
+WORKDIR /home/sim
+RUN mkdir -p out
+COPY --from=cook-stage /home/sim/Project/out/ ./out/
+CMD [ "./out/LinuxNoEditor/Drone_QRCode.sh", "-opengl4" ]
