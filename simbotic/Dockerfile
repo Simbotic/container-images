@@ -164,9 +164,12 @@ WORKDIR $HOME/SimboticEngine/Engine/Plugins/Simbotic
 RUN eval $(ssh-agent) && \
     ssh-add $HOME/simbotic_key && \
     git clone git@github.com:Simbotic/ue4-gst-plugin.git --depth 1 GStreamer
+
 WORKDIR $HOME/SimboticEngine
+RUN sed -i 's/; +TargetedRHIs=GLSL_430/+TargetedRHIs=GLSL_430/' Engine/Config/BaseEngine.ini
 RUN sed -i 's/bUseUnityBuild = true/bUseUnityBuild = false/' Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs
 RUN sed -i 's/bUsePCHFiles = true/bUsePCHFiles = false/' Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs
+
 RUN ./Setup.sh
 RUN ./GenerateProjectFiles.sh
 RUN make
@@ -176,9 +179,7 @@ USER $USERNAME
 ENV SIMBOTIC_PROJECT $HOME/Project/
 ENV SIMBOTIC_ROOT $HOME/SimboticEngine/
 
-ARG PROJECT_NAME=Drone_QRCode
-# TODO: clone project instead of copying
-COPY --chown=$USERNAME:$USERNAME $PROJECT_NAME $SIMBOTIC_PROJECT
+COPY --chown=$USERNAME:$USERNAME QRobot $SIMBOTIC_PROJECT
 
 COPY --chown=$USERNAME:$USERNAME ./cook.sh $SIMBOTIC_PROJECT
 
@@ -194,20 +195,27 @@ RUN eval $(ssh-agent) && \
 ENV SIMBOTIC_GST_ELEMENTS $HOME/Gst-elements/
 
 WORKDIR $SIMBOTIC_GST_ELEMENTS
-RUN cargo build
+RUN cargo build --release
 
 ######## STAGE: cook-stage
 FROM gst-plugin-stage as cook-stage
 
 WORKDIR $SIMBOTIC_PROJECT
 RUN ./generate.sh && ./build.sh
-RUN ./cook.sh 1.0 Drone_QRCode
+RUN ./cook.sh 1.0 QRobot QRobot 720x480
 
 ######## STAGE: production-stage
-FROM base as production-stage
+FROM gst-dev-stage as production-stage
 
 USER sim
 WORKDIR /home/sim
-RUN mkdir -p out
+RUN mkdir -p out && mkdir -p Gst-elements
 COPY --from=cook-stage /home/sim/Project/out/ ./out/
-CMD [ "./out/LinuxNoEditor/Drone_QRCode.sh", "-opengl4" ]
+
+ENV GST_PLUGIN_PATH /home/sim/Gst-elements/
+COPY --from=cook-stage /home/sim/Gst-elements/target/release $GST_PLUGIN_PATH
+
+USER root
+RUN echo -e '#!/usr/bin/env bash\n/home/sim/out/LinuxNoEditor/QRobot.sh -opengl4' > /usr/bin/qrobot && \
+    chmod +x /usr/bin/qrobot
+USER sim

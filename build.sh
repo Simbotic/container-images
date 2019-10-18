@@ -9,5 +9,6 @@ then
 else
     echo "===> development"
     docker build --target cook-stage -t simbotic ./simbotic
-    # docker build --target simbotic-engine-stage -t simbotic ./simbotic
+    # to invalidate cache
+    # docker build --build-arg DATE_OPT="$(date +%s)" --target cook-stage -t simbotic ./simbotic
 fi
